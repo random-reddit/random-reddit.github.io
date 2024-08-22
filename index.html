@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get A Random Reddit Post</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            font-size: 16px;
+            width: 100%;
+            max-width: 300px;
+            box-sizing: border-box;
+        }
+        button {
+            cursor: pointer;
+        }
+        #result a {
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px 15px;
+            background-color: #007bff;
+            border-radius: 5px;
+            transition: background-color 0.3s ease, transform 0.3s ease;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        #result a:hover {
+            background-color: #0056b3;
+            transform: scale(1.05);
+        }
+        #post-image {
+            margin-top: 15px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            display: block;
+        }
+        #loading {
+            font-size: 20px;
+            font-weight: bold;
+            color: #007bff;
+            margin-top: 20px;
+            display: none;
+        }
+        #result {
+            margin-top: 20px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Random Reddit Post</h1>
+    <label for="subreddit">Enter a subreddit name:</label>
+    <input type="text" id="subreddit" placeholder="e.g., memes, funny, askreddit">
+    <button onclick="fetchRandomPost()">Get Random Post</button>
+
+    <div id="loading">Loading...</div>
+    <div id="result"></div>
+
+    <script>
+        function fetchRandomPost() {
+            const subreddit = document.getElementById('subreddit').value.trim();
+            const resultDiv = document.getElementById('result');
+            const loadingDiv = document.getElementById('loading');
+
+            // Clear previous results and show loading
+            resultDiv.innerHTML = '';
+            loadingDiv.style.display = 'block';
+
+            if (subreddit) {
+                const url = `https://www.reddit.com/r/${subreddit}/random.json`;
+                
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        loadingDiv.style.display = 'none'; // Hide loading
+
+                        if (data && data[0] && data[0].data && data[0].data.children && data[0].data.children[0]) {
+                            const post = data[0].data.children[0].data;
+                            const postLink = `https://www.reddit.com${post.permalink}`;
+                            resultDiv.innerHTML = `<a href="${postLink}" target="_blank">${post.title}</a>`;
+
+                            // Check if post has an image
+                            const postImage = post.url;
+                            if (postImage && (postImage.endsWith('.jpg') || postImage.endsWith('.png') || postImage.endsWith('.gif'))) {
+                                const imageElement = document.createElement('img');
+                                imageElement.id = 'post-image';
+                                imageElement.src = postImage;
+                                resultDiv.appendChild(imageElement); // Append image below link
+                            }
+                        } else {
+                            resultDiv.innerHTML = 'No post found or invalid subreddit.';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching data:', error);
+                        loadingDiv.style.display = 'none'; // Hide loading
+                        resultDiv.innerHTML = 'An error occurred. Please try again.';
+                    });
+            } else {
+                loadingDiv.style.display = 'none'; // Hide loading
+                resultDiv.innerHTML = 'Please enter a subreddit name.';
+            }
+        }
+
+        // Add event listener for Enter key
+        document.getElementById('subreddit').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                fetchRandomPost();
+            }
+        });
+    </script>
+
+</body>
+</html>
